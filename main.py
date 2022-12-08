@@ -3,6 +3,7 @@ from queue import PriorityQueue
 import math
 
 
+
 class Street:
     def __init__(self, i, s):  # i to be id s to be spot
         self.id = i
