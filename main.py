@@ -189,9 +189,9 @@ class ParkingSimulation:
 
 
     def departure(self):
-        self.clock += self.t_departure
         c = self.cars.get()[1]
         c.leave()
+
 
     def end(self):
         pass
@@ -207,13 +207,9 @@ def gen_exp_rv_list(lam, n):
 
 
 def main():
-    t_interarrival_list = list()
-    for i in range(0,100):
-        t_interarrival_list.append(5)
+    t_interarrival_list = [5,6,8,2,1,6]
+    t_parking_list = [5,15,15,6,4,8]
 
-    t_parking_list = list()
-    for i in range(0,100):
-        t_parking_list.append(60)
     #t_parking_list = gen_exp_rv_list(1/60, 10)
 
     sim = ParkingSimulation(t_interarrival_list, t_parking_list)
