@@ -16,6 +16,7 @@ class Street:
 
     def park_car(self):
         self.available_spot -= 1
+        self.currently_parked += 1
         if self.currently_parked == self.max_spot:
             self.is_full = True
 
@@ -104,6 +105,10 @@ class ParkingSimulation:
         self.num_empty_spot = 0  # number of empty spot
         self.num_car_finding = 0  # current number finding parking
 
+
+    def run(self):
+        self.time_adv()
+
     def get_street(self, id):
         for str in self.streets:
             if str.id == id:
@@ -117,55 +122,71 @@ class ParkingSimulation:
         self.t_arrival = self.t_arrival_list[0] + self.clock
         self.t_departure = float("inf")
         self.t_change_street = float("inf")
-        tmp = self.cars.get()
-        t = tmp[0]
-        car = tmp[1]
-        if car.status == 0:
-            self.t_change_street = t
 
-        if car.status == 1:
-            self.t_departure = t
+        if not self.cars.empty():
+            tmp = self.cars.get()
+            t = tmp[0]
+            car = tmp[1]
+            if car.status == 0:
+                self.t_change_street = t
+
+            if car.status == 1:
+                self.t_departure = t
+
+            self.cars.put(tmp)
 
         t_next_event = min(self.t_arrival, self.t_change_street, self.t_departure)
         self.clock = t_next_event
         if t_next_event == self.t_arrival:
+            self.t_arrival_list.pop(0)
             self.arrival()
-        if t_next_event == self.t_departure:
-            self.departure()
-        if t_next_event == self.t_change_street:
-            self.change_street(car, self.get_street(car.location))
+        else:
+            if t_next_event == self.t_departure:
+                self.departure()
+
+            else:
+                if t_next_event == self.t_change_street:
+                    self.change_street(car, self.get_street(car.location))
+
+        self.time_adv()
 
     def change_street(self, car, street):
         available_street = list()
-        for i in range(0, 15):
-            if self.adj_streets[street.id][i] == 1:
+        for i in range(0, 16):
+            if self.adj_streets.item((street.id, i)) == 1:
                 available_street.append(self.get_street(i))
 
         r = np.random.uniform(low=0.0, high=len(available_street))
         i = math.floor(r)
         target_street = available_street[i]
-        car.change_street(street, target_street)
+        car.change_street(street, target_street.id)
         if not target_street.is_full:
             self.park(car, target_street)
+
+        else:
+            self.cars.get()
+            self.cars.put((self.clock + target_street.t_pass_street, car))
 
     def park(self, car, street):
         car.park(street, self.clock)
         street.park_car()
-        self.cars.get()  # update car in queue
         self.cars.put((car.t_leaving, car))
 
     # arrival event
     def arrival(self):
         entry_pt = 0  # self.get_entry_pt() # get the entry point
+        self.t_parking = self.t_parking_list.pop(0)
         c = Car(self.num_cars, entry_pt, self.t_arrival, self.t_parking)
         c.status = 0
         s = self.get_street(c.location)
-
         if not s.is_full:
             self.park(c, s)
 
-        self.cars.put((self.clock + s.t_pass_street, c))
-        self.time_adv()
+        else:
+            self.cars.put((c.t_arrival+s.t_pass_street, c))
+
+
+
 
     def departure(self):
         self.clock += self.t_departure
@@ -178,7 +199,24 @@ class ParkingSimulation:
 
 # inverse transform
 def gen_exp_rv_list(lam, n):
-    l = list
+    l = list()
     for i in range(1, n):
-        l.append(-np.log(1 - (np.random.uniform(low=0.0, high=1.0))) / lam)
+        l.append((-np.log(1 - (np.random.uniform(low=0.0, high=1.0))) / lam))
     return l
+
+
+
+def main():
+    t_interarrival_list = list()
+    for i in range(0,100):
+        t_interarrival_list.append(5)
+
+    t_parking_list = list()
+    for i in range(0,100):
+        t_parking_list.append(60)
+    #t_parking_list = gen_exp_rv_list(1/60, 10)
+
+    sim = ParkingSimulation(t_interarrival_list, t_parking_list)
+    sim.run()
+
+main()
