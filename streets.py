@@ -93,7 +93,7 @@ def generate_streets(n):
     return streets
 
 
-streets = generate_streets(50)
+streets = generate_streets(17)
 for i in streets:
     print(i.id)
     for v in range(3):
@@ -110,14 +110,24 @@ for i in streets:
 
 def generate_matrix(streets):
     matrix = np.zeros((len(streets)*2, len(streets)*2))
-    for s in streets:
-        for h in s.head:
+    for current in streets:
+        for h in current.head:
             if h is not None:
-                matrix[s.id][h.id]=1
-        for e in s.end:
+                if current in h.end:# head to end
+                    matrix[current.id][h.id]=1
+                    matrix[h.id+len(streets)][current.id+len(streets)] = 1 # head to head
+                else: # head to head
+                    matrix[current.id][h.id+len(streets)] = 1
+                    matrix[h.id][current.id + len(streets)] = 1
+        for e in current.end:
             if e is not None:
-                matrix[s.id+len(streets)][e.id] = 1
-    print(matrix)
+                if current in e.head:# end to head
+                    matrix[e.id][current.id] = 1
+                    matrix[current.id+len(streets)][e.id+len(streets)] = 1
+                else:
+                    matrix[current.id + len(streets)][e.id] = 1
+                    matrix[e.id+ len(streets)][current.id] = 1
+    print(matrix.sum(axis=0))
     return matrix
 
 
