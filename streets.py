@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class Street:
     def __init__(self, i, head=None, end=None):  # i to be id s to be spot
         if end is None:
@@ -104,3 +107,18 @@ for i in streets:
         else:
             print("x")
     print()
+
+def generate_matrix(streets):
+    matrix = np.zeros((len(streets)*2, len(streets)*2))
+    for s in streets:
+        for h in s.head:
+            if h is not None:
+                matrix[s.id][h.id]=1
+        for e in s.end:
+            if e is not None:
+                matrix[s.id+len(streets)][e.id] = 1
+    print(matrix)
+    return matrix
+
+
+matrix= generate_matrix(streets)
