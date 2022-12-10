@@ -93,7 +93,7 @@ def generate_streets(n):
     return streets
 
 
-streets = generate_streets(17)
+streets = generate_streets(64)
 for i in streets:
     print(i.id)
     for v in range(3):
@@ -128,6 +128,7 @@ def generate_matrix(streets):
                     matrix[current.id + len(streets)][e.id] = 1
                     matrix[e.id+ len(streets)][current.id] = 1
     print(matrix.sum(axis=0))
+    print(matrix.sum(axis=1))
     return matrix
 
 
