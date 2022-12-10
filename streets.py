@@ -25,6 +25,7 @@ class Street:
 
     def park_car(self):
         self.available_spot -= 1
+        self.currently_parked += 1
         if self.currently_parked == self.max_spot:
             self.is_full = True
 

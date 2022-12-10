@@ -1,9 +1,10 @@
 import numpy as np
 from queue import PriorityQueue
 import math
+import streets
 
 
-
+'''
 class Street:
     def __init__(self, i, s):  # i to be id s to be spot
         self.id = i
@@ -29,6 +30,7 @@ class Street:
             self.is_empty = True
 
         self.is_full = False
+'''
 
 
 class Car:
@@ -71,7 +73,9 @@ class ParkingSimulation:
         self.t_departure = 0.0  # next departure time
         self.t_change_street = 0.0
 
-        self.streets = list()
+        self.streets = streets.generate_streets(16)
+
+        '''
         for i in range(0, 2 * 2 * 4 - 1):
             if i % 2 == 0:
                 self.streets.append(Street(i, self.size_x))
@@ -97,6 +101,9 @@ class ParkingSimulation:
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0]
         ])
+        '''
+
+        self.adj_streets = streets.generate_matrix(self.streets)
 
         self.cars = PriorityQueue()  # cars in the system stores in a priority Queue
         self.num_cars = 0
