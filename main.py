@@ -1,8 +1,9 @@
+import random
+
 import numpy as np
 from queue import PriorityQueue
 import math
 import streets
-
 
 '''
 class Street:
@@ -73,7 +74,9 @@ class ParkingSimulation:
         self.t_departure = 0.0  # next departure time
         self.t_change_street = 0.0
 
-        self.streets = streets.generate_streets(16)
+        self.streets, self.adj_streets = streets.generate_streets(32)
+
+        self.entry_pt = self.generate_entry_pt()
 
         '''
         for i in range(0, 2 * 2 * 4 - 1):
@@ -103,16 +106,14 @@ class ParkingSimulation:
         ])
         '''
 
-        self.adj_streets = streets.generate_matrix(self.streets)
-
         self.cars = PriorityQueue()  # cars in the system stores in a priority Queue
         self.num_cars = 0
 
         self.clock = 0.0  # simulation clock
+        self.last_arrival= self.clock
 
         self.num_empty_spot = 0  # number of empty spot
         self.num_car_finding = 0  # current number finding parking
-
 
     def run(self):
         self.time_adv()
@@ -127,7 +128,7 @@ class ParkingSimulation:
     def time_adv(self):
         if self.clock >= self.max_clock:
             self.end()
-        self.t_arrival = self.t_arrival_list[0] + self.clock
+        self.t_arrival = self.t_arrival_list[0] + self.last_arrival
         self.t_departure = float("inf")
         self.t_change_street = float("inf")
 
@@ -147,6 +148,7 @@ class ParkingSimulation:
         self.clock = t_next_event
         if t_next_event == self.t_arrival:
             self.t_arrival_list.pop(0)
+            self.last_arrival = self.clock
             self.arrival()
         else:
             if t_next_event == self.t_departure:
@@ -158,16 +160,15 @@ class ParkingSimulation:
 
         self.time_adv()
 
-    def change_street(self, car, street):
-        available_street = list()
-        for i in range(0, 16):
-            if self.adj_streets.item((street.id, i)) == 1:
-                available_street.append(self.get_street(i))
-
-        r = np.random.uniform(low=0.0, high=len(available_street))
-        i = math.floor(r)
-        target_street = available_street[i]
-        car.change_street(street, target_street.id)
+    def change_street(self, car, current_street):
+        available_street = [index for index, i in enumerate(self.adj_streets[current_street.id]) if i == 1] # a list of ids of turnable streets
+        if current_street.id > len(self.streets) / 2:  # add id of the street for U turn
+            available_street.append(current_street.id + len(self.streets) / 2)
+        else:
+            available_street.append(current_street.id - len(self.streets) / 2)
+        target_street_id = random.choice(available_street)
+        target_street = self.get_street(target_street_id)
+        car.change_street(current_street, target_street.id)
         if not target_street.is_full:
             self.park(car, target_street)
 
@@ -178,11 +179,25 @@ class ParkingSimulation:
     def park(self, car, street):
         car.park(street, self.clock)
         street.park_car()
+        print(self.clock, car.t_leaving, type(car))
         self.cars.put((car.t_leaving, car))
+
+    def generate_entry_pt(self):
+        entry_pts = []
+        m1 = self.adj_streets.sum(axis=0)
+        for id, i in enumerate(m1):
+            if i <= 1:
+                entry_pts.append(id)
+        print("All possible entry points {}".format(entry_pts))
+        return entry_pts
+
+    def get_entry_pt(self):
+        return random.choice(self.entry_pt)
 
     # arrival event
     def arrival(self):
-        entry_pt = 0  # self.get_entry_pt() # get the entry point
+        entry_pt = self.get_entry_pt()  # self.get_entry_pt() # get the entry point
+        print("entry point " + str(entry_pt) + " is choosen")
         self.t_parking = self.t_parking_list.pop(0)
         c = Car(self.num_cars, entry_pt, self.t_arrival, self.t_parking)
         c.status = 0
@@ -191,15 +206,11 @@ class ParkingSimulation:
             self.park(c, s)
 
         else:
-            self.cars.put((c.t_arrival+s.t_pass_street, c))
-
-
-
+            self.cars.put((c.t_arrival + s.t_pass_street, c))
 
     def departure(self):
         c = self.cars.get()[1]
-        c.leave()
-
+        c.leave(self.get_street(c.location))
 
     def end(self):
         pass
@@ -213,14 +224,14 @@ def gen_exp_rv_list(lam, n):
     return l
 
 
-
 def main():
-    t_interarrival_list = [5,6,8,2,1,6]
-    t_parking_list = [5,15,15,6,4,8]
+    t_interarrival_list = [5, 6, 8, 2, 1, 6]
+    t_parking_list = [5, 15, 15, 6, 4, 8]
 
-    #t_parking_list = gen_exp_rv_list(1/60, 10)
+    # t_parking_list = gen_exp_rv_list(1/60, 10)
 
     sim = ParkingSimulation(t_interarrival_list, t_parking_list)
     sim.run()
+
 
 main()

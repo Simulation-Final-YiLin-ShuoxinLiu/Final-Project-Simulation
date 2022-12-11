@@ -42,7 +42,7 @@ class Street:
         return str(self.id) + str(self.head) + str(self.end)
 
 
-def generate_streets(n):
+def pre_generate_streets(n):
     streets = []
     street_ids = list(range(n))
     streets.append(Street(i=street_ids.pop(0)))
@@ -94,20 +94,7 @@ def generate_streets(n):
     return streets
 
 
-streets = generate_streets(64)
-for i in streets:
-    print(i.id)
-    for v in range(3):
-        if i.head[v] is not None:
-            print(i.head[v].id)
-        else:
-            print("x")
-    for v in range(3):
-        if i.end[v] is not None:
-            print(i.end[v].id)
-        else:
-            print("x")
-    print()
+
 
 def generate_matrix(streets):
     matrix = np.zeros((len(streets)*2, len(streets)*2))
@@ -128,9 +115,15 @@ def generate_matrix(streets):
                 else:
                     matrix[current.id + len(streets)][e.id] = 1
                     matrix[e.id+ len(streets)][current.id] = 1
-    print(matrix.sum(axis=0))
-    print(matrix.sum(axis=1))
+    print("# of streets: {}".format(len(matrix)))
     return matrix
 
 
-matrix= generate_matrix(streets)
+def generate_streets(n):
+    assert n%2==0
+    streets = pre_generate_streets(n//2)
+    matrix = generate_matrix(streets)
+    streets = [Street(s) for s in range(len(matrix))]
+    return streets, matrix
+
+
