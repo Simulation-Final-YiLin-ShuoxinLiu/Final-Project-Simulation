@@ -51,6 +51,7 @@ class Car:
 
     def leave(self, street):
         street.leave_car()
+        print("Car={} left the system".format(self.id))
         self.status = 2
 
     def change_street(self, current, target):
@@ -74,7 +75,7 @@ class ParkingSimulation:
         self.t_departure = 0.0  # next departure time
         self.t_change_street = 0.0
 
-        self.streets, self.adj_streets = streets.generate_streets(32)
+        self.streets, self.adj_streets = streets.generate_streets(16)
 
         self.entry_pt = self.generate_entry_pt()
 
@@ -134,7 +135,10 @@ class ParkingSimulation:
         print("-------------------------------------------T={}".format(self.clock))
         if self.clock >= self.max_clock:
             self.end()
-        self.t_arrival = self.t_arrival_list[0] + self.last_arrival
+        if self.t_arrival_list:
+            self.t_arrival = self.t_arrival_list[0] + self.last_arrival
+        else:
+            self.t_arrival = float("inf")
         self.t_departure = float("inf")
         self.t_change_street = float("inf")
 
@@ -143,7 +147,7 @@ class ParkingSimulation:
             if self.get_car(test[1]).status==1:
                 print("Next Event in the queue is Leave at T={} Car={}".format(test[0],test[1]))
             else:
-                print("Next Event in the queue is Change street at T={} Car={}".format(test[0], test[1]))
+                print("Next Event in the queue is Change street at T={} Car={} at street {}".format(test[0], test[1], self.get_car(test[1]).location))
             self.cars.put(test)
 
             tmp = self.cars.get()
@@ -157,12 +161,12 @@ class ParkingSimulation:
                 self.t_departure = t
 
             self.cars.put(tmp)
-
+        else:# no event in the queue and no new car arrival
+            if not self.t_arrival_list:
+                self.end()
         t_next_event = min(self.t_arrival, self.t_change_street, self.t_departure)
-
         self.clock = t_next_event
         if t_next_event == self.t_arrival:
-            print("Next Event is Arrival at T={}".format(t_next_event))
             self.t_arrival_list.pop(0)
             self.last_arrival = self.clock
             self.arrival()
@@ -177,10 +181,11 @@ class ParkingSimulation:
 
     def change_street(self, car, current_street):
         available_street = [index for index, i in enumerate(self.adj_streets[current_street.id]) if i == 1] # a list of ids of turnable streets
-        if current_street.id > len(self.streets) / 2:  # add id of the street for U turn
-            available_street.append(current_street.id + len(self.streets) / 2)
+        if current_street.id > (len(self.streets)/2):  # add id of the street for U turn
+            available_street.append(int(current_street.id - len(self.streets) / 2))
         else:
-            available_street.append(current_street.id - len(self.streets) / 2)
+            available_street.append(int(current_street.id + len(self.streets) / 2))
+        print("----available streets {}".format(available_street))
         target_street_id = random.choice(available_street)
         target_street = self.get_street(target_street_id)
         car.change_street(current_street, target_street.id)
@@ -194,7 +199,7 @@ class ParkingSimulation:
     def park(self, car, street):
         car.park(street, self.clock)
         street.park_car()
-        print(self.clock, car.t_leaving, type(car))
+        print("Car = {} parked at street={} at T={} Waiting time = {}".format(car.id,street.id, self.clock, car.t_waiting))
         self.cars.put((car.t_leaving, car.id))
 
     def generate_entry_pt(self):
@@ -212,13 +217,14 @@ class ParkingSimulation:
     # arrival event
     def arrival(self):
         entry_pt = self.get_entry_pt()  # self.get_entry_pt() # get the entry point
-        print("entry point " + str(entry_pt) + " is choosen")
         self.t_parking = self.t_parking_list.pop(0)
         c = Car(self.num_cars, entry_pt, self.t_arrival, self.t_parking)
         self.cars_list.append(c)
         self.num_cars+=1
         c.status = 0
         s = self.get_street(c.location)
+        print("Next Event is Arrival at T={} Car={}".format(self.clock,self.num_cars-1))
+        print("entry point " + str(entry_pt) + " is choosen")
         if not s.is_full:
             self.park(c, s)
 
@@ -231,7 +237,8 @@ class ParkingSimulation:
         car.leave(self.get_street(car.location))
 
     def end(self):
-        pass
+        print("Program end")
+        return  0
 
 
 # inverse transform

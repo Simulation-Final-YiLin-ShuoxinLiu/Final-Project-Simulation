@@ -15,10 +15,10 @@ class Street:
 
         self.id = i
         self.max_spot = 10
-        self.currently_parked = 0
+        self.currently_parked = 9
         self.is_full = False
         self.is_empty = True
-        self.available_spot = self.max_spot
+        self.available_spot = 0
         self.t_pass_street = 0.3
 
 
@@ -28,15 +28,14 @@ class Street:
         self.currently_parked += 1
         if self.currently_parked == self.max_spot:
             self.is_full = True
-
         self.is_empty = False
 
     def leave_car(self):
         self.available_spot += 1
         if self.currently_parked == 0:
             self.is_empty = True
-
-        self.is_full = False
+        if self.is_full:
+            self.is_full = False
 
     def __str__(self):
         return str(self.id) + str(self.head) + str(self.end)
