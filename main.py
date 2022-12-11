@@ -1,5 +1,5 @@
 import random
-
+import input
 import numpy as np
 from queue import PriorityQueue
 import math
@@ -60,8 +60,8 @@ class Car:
 
 
 class ParkingSimulation:
-    def __init__(self, t_arrival_list, t_parking_list):
-        self.max_clock = 600
+    def __init__(self, t_arrival_list, t_parking_list, street_num, max_clock):
+        self.max_clock = max_clock
 
         self.num_block_m = 2  # m*n block
         self.num_block_n = 2
@@ -75,7 +75,7 @@ class ParkingSimulation:
         self.t_departure = 0.0  # next departure time
         self.t_change_street = 0.0
 
-        self.streets, self.adj_streets = streets.generate_streets(16)
+        self.streets, self.adj_streets = streets.generate_streets(street_num)
 
         self.entry_pt = self.generate_entry_pt()
 
@@ -134,7 +134,9 @@ class ParkingSimulation:
     def time_adv(self):
         print("-------------------------------------------T={}".format(self.clock))
         if self.clock >= self.max_clock:
+            print("----------------------------------------------------------------------Maximum time reached!")
             self.end()
+            return 0
         if self.t_arrival_list:
             self.t_arrival = self.t_arrival_list[0] + self.last_arrival
         else:
@@ -143,6 +145,7 @@ class ParkingSimulation:
         self.t_change_street = float("inf")
 
         if not self.cars.empty():
+
             test = self.cars.get()
             if self.get_car(test[1]).status==1:
                 print("Next Event in the queue is Leave at T={} Car={}".format(test[0],test[1]))
@@ -161,12 +164,15 @@ class ParkingSimulation:
                 self.t_departure = t
 
             self.cars.put(tmp)
-        else:# no event in the queue and no new car arrival
-            if not self.t_arrival_list:
+        else:
+            if not self.t_arrival_list: # no event in the queue and no new car arrival
+                print("------------------------------------------------------------------------All cars left!")
                 self.end()
+                return 0
         t_next_event = min(self.t_arrival, self.t_change_street, self.t_departure)
         self.clock = t_next_event
         if t_next_event == self.t_arrival:
+            print(self.t_arrival)
             self.t_arrival_list.pop(0)
             self.last_arrival = self.clock
             self.arrival()
@@ -176,10 +182,13 @@ class ParkingSimulation:
 
             else:
                 if t_next_event == self.t_change_street:
-                    self.change_street(car, self.get_street(car.location))
+                    self.change_street()
         self.time_adv()
 
-    def change_street(self, car, current_street):
+    def change_street(self):
+        car_id = self.cars.get()[1]
+        car = self.get_car(car_id)
+        current_street=self.get_street(car.location)
         available_street = [index for index, i in enumerate(self.adj_streets[current_street.id]) if i == 1] # a list of ids of turnable streets
         if current_street.id > (len(self.streets)/2):  # add id of the street for U turn
             available_street.append(int(current_street.id - len(self.streets) / 2))
@@ -199,7 +208,8 @@ class ParkingSimulation:
     def park(self, car, street):
         car.park(street, self.clock)
         street.park_car()
-        print("Car = {} parked at street={} at T={} Waiting time = {}".format(car.id,street.id, self.clock, car.t_waiting))
+        print("Car={} parked at street={} at T={} Parking time = {} Waiting time = {}".format(car.id,street.id, self.clock, car.t_parking, car.t_waiting))
+        print(car.t_leaving)
         self.cars.put((car.t_leaving, car.id))
 
     def generate_entry_pt(self):
@@ -237,8 +247,11 @@ class ParkingSimulation:
         car.leave(self.get_street(car.location))
 
     def end(self):
+        for c in self.cars_list:
+            if c.status != 2:
+                print("Car={} has status 2".format(c.id))
         print("Program end")
-        return  0
+        return 0
 
 
 # inverse transform
@@ -250,12 +263,31 @@ def gen_exp_rv_list(lam, n):
 
 
 def main():
-    t_interarrival_list = [5, 6, 8, 2, 1, 6]
-    t_parking_list = [5, 15, 15, 6, 4, 8]
+    streets_num = 128
+    cars_num = 200
 
-    # t_parking_list = gen_exp_rv_list(1/60, 10)
+    parking = [i * 60 for i in
+               [9, 8, 7.5, 7, 10, 12, 8, 9, 9.5, 55, 49, 22, 46, 2, 4, 0.5, 0.2, 1, 2, 1.5, 0.5, 7, 3.5, 7.5, 5.5, 15,
+                14.5, 12.5, 16, 40.5]]
 
-    sim = ParkingSimulation(t_interarrival_list, t_parking_list)
+    park_lam = input.caculate_lam(parking)
+    print(park_lam)
+    input.exp_KS_test(parking, park_lam, 0.990)
+    parking_rns = input.gen_rn_list(cars_num)
+    parking_rvs = input.gen_exp_rv_list(park_lam, parking_rns)
+
+
+    interarrval= [i / 60 for i in
+               [30, 50, 40, 20, 60, 50, 40, 65, 90, 30, 20, 15, 40, 50, 20, 52,5,1,10,2]]
+
+    arrival_lam = input.caculate_lam(interarrval)
+    print(arrival_lam)
+    input.exp_KS_test(interarrval, arrival_lam, 0.990)
+    arrival_lam_rns = input.gen_rn_list(cars_num)
+    interarrval_rvs = input.gen_exp_rv_list(arrival_lam, arrival_lam_rns)
+
+
+    sim = ParkingSimulation(interarrval_rvs, parking_rvs, streets_num,100000)
     sim.run()
 
 main()

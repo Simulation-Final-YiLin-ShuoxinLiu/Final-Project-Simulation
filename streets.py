@@ -15,13 +15,11 @@ class Street:
 
         self.id = i
         self.max_spot = 10
-        self.currently_parked = 9
+        self.currently_parked = 0
         self.is_full = False
         self.is_empty = True
         self.available_spot = 0
         self.t_pass_street = 0.3
-
-
 
     def park_car(self):
         self.available_spot -= 1
@@ -71,17 +69,17 @@ def pre_generate_streets(n):
                 streets.append(new_street)
                 new_street.end[pos] = current
                 current.head[pos] = new_street
-                if current.end[0].head[2] is not None and pos==0:
-                    current.head[0].head[0]= current.end[0].head[2]
-                    current.end[0].head[2].head[2]=current.head[0]
-                if current.end[2].head[0] is not None and pos==2:
-                    current.head[2].head[2]= current.end[2].head[0]
-                    current.end[2].head[0].head[0]=current.head[2]
+                if current.end[0].head[2] is not None and pos == 0:
+                    current.head[0].head[0] = current.end[0].head[2]
+                    current.end[0].head[2].head[2] = current.head[0]
+                if current.end[2].head[0] is not None and pos == 2:
+                    current.head[2].head[2] = current.end[2].head[0]
+                    current.end[2].head[0].head[0] = current.head[2]
             pos += 1
         if current in current.head[0].end:
-            current.head[0].end=[current,current.head[2],current.head[1]]
+            current.head[0].end = [current, current.head[2], current.head[1]]
         else:
-            current.head[0].head = [current.head[1],current.head[2],current]
+            current.head[0].head = [current.head[1], current.head[2], current]
         if current in current.head[1].end:
             current.head[1].end = [current.head[0], current, current.head[2]]
         else:
@@ -93,36 +91,32 @@ def pre_generate_streets(n):
     return streets
 
 
-
-
 def generate_matrix(streets):
-    matrix = np.zeros((len(streets)*2, len(streets)*2))
+    matrix = np.zeros((len(streets) * 2, len(streets) * 2))
     for current in streets:
         for h in current.head:
             if h is not None:
-                if current in h.end:# head to end
-                    matrix[current.id][h.id]=1
-                    matrix[h.id+len(streets)][current.id+len(streets)] = 1 # head to head
-                else: # head to head
-                    matrix[current.id][h.id+len(streets)] = 1
+                if current in h.end:  # head to end
+                    matrix[current.id][h.id] = 1
+                    matrix[h.id + len(streets)][current.id + len(streets)] = 1  # head to head
+                else:  # head to head
+                    matrix[current.id][h.id + len(streets)] = 1
                     matrix[h.id][current.id + len(streets)] = 1
         for e in current.end:
             if e is not None:
-                if current in e.head:# end to head
+                if current in e.head:  # end to head
                     matrix[e.id][current.id] = 1
-                    matrix[current.id+len(streets)][e.id+len(streets)] = 1
+                    matrix[current.id + len(streets)][e.id + len(streets)] = 1
                 else:
                     matrix[current.id + len(streets)][e.id] = 1
-                    matrix[e.id+ len(streets)][current.id] = 1
+                    matrix[e.id + len(streets)][current.id] = 1
     print("# of streets: {}".format(len(matrix)))
     return matrix
 
 
 def generate_streets(n):
-    assert n%2==0
-    streets = pre_generate_streets(n//2)
+    assert n % 2 == 0
+    streets = pre_generate_streets(n // 2)
     matrix = generate_matrix(streets)
     streets = [Street(s) for s in range(len(matrix))]
     return streets, matrix
-
-
