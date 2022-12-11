@@ -110,7 +110,6 @@ def generate_matrix(streets):
                 else:
                     matrix[current.id + len(streets)][e.id] = 1
                     matrix[e.id + len(streets)][current.id] = 1
-    print("# of streets: {}".format(len(matrix)))
     return matrix
 
 
