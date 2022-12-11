@@ -14,22 +14,22 @@ class Street:
             self.head = [None, None, None]  # head, a list of street [left,stright, right]
 
         self.id = i
-        self.max_spot = 10
+        self.max_spot = 8
         self.currently_parked = 0
         self.is_full = False
         self.is_empty = True
-        self.available_spot = 0
         self.t_pass_street = 0.3
 
     def park_car(self):
-        self.available_spot -= 1
+        assert self.is_full==False and self.currently_parked<self.max_spot
         self.currently_parked += 1
         if self.currently_parked == self.max_spot:
             self.is_full = True
         self.is_empty = False
 
     def leave_car(self):
-        self.available_spot += 1
+        assert self.is_empty == False and self.currently_parked>0
+        self.currently_parked -= 1
         if self.currently_parked == 0:
             self.is_empty = True
         if self.is_full:
