@@ -8,7 +8,7 @@ from scipy import stats
 
 def gen_rn_list(n):
     l = list()
-    for i in range(1, n):
+    for i in range(0, n):
         l.append(np.random.uniform(low=0.0, high=1.0))
     return l
 

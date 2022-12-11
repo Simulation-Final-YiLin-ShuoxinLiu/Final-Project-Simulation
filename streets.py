@@ -14,11 +14,11 @@ class Street:
             self.head = [None, None, None]  # head, a list of street [left,stright, right]
 
         self.id = i
-        self.max_spot = 8
+        self.max_spot = 10
         self.currently_parked = 0
         self.is_full = False
         self.is_empty = True
-        self.t_pass_street = 0.3
+        self.t_pass_street = 0.5
 
     def park_car(self):
         assert self.is_full==False and self.currently_parked<self.max_spot

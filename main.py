@@ -61,7 +61,7 @@ class Car:
 
 
 class ParkingSimulation:
-    def __init__(self, t_arrival_list, t_parking_list, street_num, max_clock):
+    def __init__(self, t_arrival_list, t_parking_list, street_num, max_clock, t_pre_parking,parked_spot_each_street):
         self.max_clock = max_clock
 
         self.num_block_m = 2  # m*n block
@@ -75,6 +75,9 @@ class ParkingSimulation:
         self.t_parking = 0.0  # parking time of next arriving car
         self.t_departure = 0.0  # next departure time
         self.t_change_street = 0.0
+
+        self.t_pre_parking=t_pre_parking #The parking time of cars that has been parking before simulation
+        self.parked_spot_each_street=parked_spot_each_street #The number of cars that has been parking on each street before simulation
 
         self.streets, self.adj_streets = streets.generate_streets(street_num)
 
@@ -123,11 +126,18 @@ class ParkingSimulation:
                 return car
 
     def warmup(self):
-        while (self.clock<120):
-            self.time_adv()
-            self.warmup_car_id=len(self.cars_list)-1
+        for s in self.streets:
+            for n in range(self.parked_spot_each_street):
+                c = Car(self.num_cars, s, 0, self.t_pre_parking.pop(0))
+                self.cars_list.append(c)
+                self.num_cars += 1
+                self.park(c, s)
+        self.warmup_car_id=self.num_cars-1
+
+
 
     def run(self):
+        self.warmup()
         result=1
         while(result!=0):
             result=self.time_adv()
@@ -249,12 +259,17 @@ class ParkingSimulation:
         car.leave(self.get_street(car.location))
 
     def end(self):
-        for c in self.cars_list:
-            if c.status != 2:
-                print("Car={} has status {}".format(c.id,c.status))
-
-        spendingtime = [car.t_waiting for car in self.cars_list[self.warmup_car_id+1:]]
-        graph.histogram(spendingtime)
+        print(self.warmup_car_id+1)
+        for c in self.cars_list[self.warmup_car_id+1:]:
+            if c.status == 0:
+                print("Car={} has not found parking spot".format(c.id,c.status))
+        un_parked=0
+        for car in self.cars_list[self.warmup_car_id + 1:]:
+            if car.status==0:
+                un_parked +=1
+        print("The number of unparked car={}".format(un_parked))
+        spending_time = [car.t_waiting for car in self.cars_list[self.warmup_car_id+1:] if car.status!=0]
+        graph.histogram(spending_time)
 
         print("Program end")
         return 0
@@ -266,6 +281,7 @@ class ParkingSimulation:
 def main():
     streets_num = 128
     cars_num = 10000
+    parked_spot_each_street=10
 
     parking = [i * 60 for i in
                [9, 8, 7.5, 7, 10, 12, 8, 9, 9.5, 55, 49, 22, 46, 2, 4, 0.5, 0.2, 1, 2, 1.5, 0.5, 7, 3.5, 7.5, 5.5, 15,
@@ -276,6 +292,11 @@ def main():
     input.exp_KS_test(parking, park_lam, 0.990)
     parking_rns = input.gen_rn_list(cars_num)
     parking_rvs = input.gen_exp_rv_list(park_lam, parking_rns)
+
+    pre_parking_rns=input.gen_rn_list(parked_spot_each_street*streets_num)
+    pre_parking_rvs =input.gen_exp_rv_list(park_lam,pre_parking_rns)
+    print(len(pre_parking_rvs))
+
 
 
     interarrval= [i / 60 for i in
@@ -288,7 +309,7 @@ def main():
     interarrval_rvs = input.gen_exp_rv_list(arrival_lam, arrival_lam_rns)
 
 
-    sim = ParkingSimulation(interarrval_rvs, parking_rvs, streets_num,10080)
+    sim = ParkingSimulation(interarrval_rvs, parking_rvs, streets_num,1000,pre_parking_rvs,parked_spot_each_street)
     sim.run()
 
 
