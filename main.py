@@ -313,15 +313,15 @@ class ParkingSimulation:
             plt.savefig('histogram.png')
             plt.close()
 
-            # utilization
-            plt.plot(self.num_car_finding[0], self.num_car_finding[1])  # Plot the chart
-            plt.savefig('num_car_finding.png')
-            plt.close()
+        # utilization
+        plt.plot(self.num_car_finding[0], self.num_car_finding[1])  # Plot the chart
+        plt.savefig(str(self.count)+'num_car_finding.png')
+        plt.close()
 
-            #current finding
-            plt.plot(self.num_car_finding[0], self.utilization)  # Plot the chart
-            plt.savefig('utilization.png')
-            plt.close()
+        #current finding
+        plt.plot(self.num_car_finding[0], self.utilization)  # Plot the chart
+        plt.savefig(str(self.count)+'utilization.png')
+        plt.close()
 
         # t1=0
         # t2=0
@@ -374,6 +374,7 @@ def main():
 
     input.exp_KS_test(parking, park_lam, 0.990)
     input.exp_KS_test(interarrval, arrival_lam, 0.990)
+
     if AV==False:
         for i in range(20):
             # parking_rns = input.gen_rn_list(cars_num)
@@ -404,22 +405,8 @@ def main():
                                     parked_spot_each_street, i)  # 540 mins = 9hrs - 4hrs warm up =5 hrs
             sim.run()
 
-
-
     else:
         for i in range(20):
-            # parking_rns = input.gen_rn_list(cars_num)
-            # parking_rvs = input.gen_exp_rv_list(park_lam, parking_rns)
-            #
-            # pre_parking_rns = input.gen_rn_list(parked_spot_each_street * streets_num)
-            # pre_parking_rvs = input.gen_exp_rv_list(park_lam, pre_parking_rns)
-            #
-            # arrival_lam_rns = input.gen_rn_list(cars_num)
-            # interarrval_rvs = input.gen_exp_rv_list(arrival_lam, arrival_lam_rns)
-            #
-            # input.save(parking_rns, "parking_rns" + str(i))
-            # input.save(pre_parking_rns, "pre_parking_rns" + str(i))
-            # input.save(arrival_lam_rns, "arrival_lam_rns" + str(i))
             if i%2==0: #0,2,4,6
                 parking_rns = input.load("parking_rns" + str(i))
                 pre_parking_rns = input.load("pre_parking_rns" + str(i))
