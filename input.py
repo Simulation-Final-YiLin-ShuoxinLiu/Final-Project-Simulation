@@ -47,3 +47,20 @@ def exp_KS_test(obervations, lam, C):
 
 
 
+def save(list, file_name):
+    # open file in write mode
+    with open('{}.txt'.format(file_name), 'w') as fp:
+        for item in list:
+            # write each item on a new line
+            fp.write("%s\n" % item)
+        print('Saved!!')
+
+def load(file_name):
+    list =[]
+    with open('{}.txt'.format(file_name), 'r') as fp:
+        for line in fp:
+            x = line[:-1]
+            # add current item to the list
+            list.append(float(x))
+    print("Loaded!")
+    return list
